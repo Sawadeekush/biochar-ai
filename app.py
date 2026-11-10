@@ -8,6 +8,8 @@ st.set_page_config(
     page_icon="🌱",
     layout="wide"
 )
+if "biochar_data" not in st.session_state:
+    st.session_state.biochar_data = {}
 
 # หัวข้อหลัก
 st.title("🌱 Biochar AI")
@@ -48,37 +50,85 @@ if menu == "Dashboard":
     )
 
 elif menu == "Biochar Profile":
+elif menu == "Biochar Profile":
     st.header("Biochar Profile")
-    st.write("ข้อมูลตัวอย่างไบโอชาร์")
+    st.write("จัดการข้อมูลตัวอย่างไบโอชาร์")
 
     sample = st.selectbox(
         "เลือกตัวอย่าง",
         ["BC-30", "BC-45", "BC-60"]
     )
 
+    default_duration = {
+        "BC-30": 30,
+        "BC-45": 45,
+        "BC-60": 60
+    }
+
+    saved = st.session_state.biochar_data.get(sample, {})
+
+    feedstock = st.text_input(
+        "วัตถุดิบ",
+        value=saved.get("feedstock", "เปลือกกล้วย")
+    )
+
     temperature = st.number_input(
         "อุณหภูมิการผลิต (°C)",
         min_value=0,
-        value=400
+        value=int(saved.get("temperature", 400))
     )
 
     duration = st.number_input(
         "ระยะเวลาให้ความร้อน (นาที)",
         min_value=0,
-        value=30 if sample == "BC-30"
-        else 45 if sample == "BC-45" else 60
+        value=int(saved.get("duration", default_duration[sample]))
     )
 
-    feedstock = st.text_input(
-        "วัตถุดิบ",
-        "เปลือกกล้วย"
+    moisture = st.number_input(
+        "ความชื้น (%)",
+        min_value=0.0,
+        max_value=100.0,
+        value=float(saved.get("moisture", 0.0))
+    )
+
+    ph = st.number_input(
+        "ค่า pH",
+        min_value=0.0,
+        max_value=14.0,
+        value=float(saved.get("ph", 7.0))
     )
 
     if st.button("บันทึกข้อมูล"):
-        st.success(f"บันทึกข้อมูล {sample} แล้ว")
-        st.write("วัตถุดิบ:", feedstock)
-        st.write("อุณหภูมิ:", temperature, "°C")
-        st.write("เวลา:", duration, "นาที")
+        st.session_state.biochar_data[sample] = {
+            "Sample": sample,
+            "Feedstock": feedstock,
+            "Temperature (°C)": temperature,
+            "Duration (min)": duration,
+            "Moisture (%)": moisture,
+            "pH": ph
+        }
+        st.success(f"บันทึก {sample} สำเร็จ!")
+
+    st.divider()
+    st.subheader("ข้อมูลตัวอย่างที่บันทึกแล้ว")
+
+    if st.session_state.biochar_data:
+        df = pd.DataFrame(
+            list(st.session_state.biochar_data.values())
+        )
+
+        st.dataframe(df, use_container_width=True)
+
+        csv = df.to_csv(index=False).encode("utf-8-sig")
+
+        st.download_button(
+            "ดาวน์โหลดข้อมูล CSV",
+            data=csv,
+            file_name="biochar_data.csv",
+            mime="text/csv"
+        )
+    else:
+        st.info("ยังไม่มีข้อมูลที่บันทึก")
 
 elif menu == "Performance Analyzer":
     st.header("Performance Analyzer")
