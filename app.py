@@ -50,7 +50,6 @@ if menu == "Dashboard":
     )
 
 elif menu == "Biochar Profile":
-elif menu == "Biochar Profile":
     st.header("Biochar Profile")
     st.write("จัดการข้อมูลตัวอย่างไบโอชาร์")
 
